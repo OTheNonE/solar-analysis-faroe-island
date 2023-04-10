@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "deploy": "npx gh-pages -d dist"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.3",
@@ -26,6 +27,7 @@
     "convert-array-to-csv": "^2.0.0",
     "file-saver": "^2.0.5",
     "geotiff": "^2.0.7",
+    "gh-pages": "^5.0.0",
     "leaflet": "^1.9.3",
     "proj4": "^2.9.0",
     "proj4leaflet": "^1.0.2",
