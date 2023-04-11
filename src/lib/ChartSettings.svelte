@@ -1,7 +1,7 @@
 
 <script lang="ts">
   // Imports:
-  import { system  } from 'src/lib/Stores';
+  import { system } from 'src/lib/Stores';
   import SunCalc from 'suncalc';
   import type { ChartTypes, Sun, Pos, Ridge } from 'src/lib/Stores';
   import { chartF } from './Functions/Chart';

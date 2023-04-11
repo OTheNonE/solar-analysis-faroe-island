@@ -2,7 +2,6 @@
 import { system } from 'src/lib/Stores';
 import { get } from 'svelte/store';
 import { getGeoTIFFImage, getBoundingBox } from './Functions/FetchFunctions';
-import type { GeoTIFFImage } from 'geotiff';
 import proj4 from 'proj4';
 
 // URLs:
