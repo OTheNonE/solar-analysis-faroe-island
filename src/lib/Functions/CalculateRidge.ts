@@ -17,13 +17,17 @@ interface getRidgePointSettings {
   ridgePointsIn?: Point[],
 }
 
-export async function getRidgePoints(pos_m: Pos, h_m: number) {
-  const DSM_25M = 'src/assets/FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif'
-  const DSM_5M = 'src/assets/FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif';
+export async function getRidgePoints(pos_m: Pos) {
 
+  const DSM_25M = 'FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif';
+  const DSM_5M = 'FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif';
+  
   // Load the 25M resolution map.
   let image_25M = await getGeoTIFFImage(DSM_25M);
   let bbox_25M = getBoundingBox(image_25M);
+
+  let px_m = convertF.PosToPixel(pos_m, bbox_25M)
+  let h_m = await getHeight(image_25M, px_m) + 2.5
 
   // Get the ridge from the 25M map.
   let ridgePoints_25M = await _getRidgePoints(pos_m, h_m, {

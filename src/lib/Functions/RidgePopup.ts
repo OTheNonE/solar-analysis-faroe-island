@@ -21,20 +21,13 @@ waitForElm('#leafletmap').then(() => {
 async function onMapClick(e) {
 
   var crd: Crd = {lat: e.latlng.lat, lng: e.latlng.lng}
-
-  let image = get(system).heightMap.map;
-  let bbox = getBoundingBox(image);
   
   const pos = convertF.LatLngToPos(crd)
-  const abs_pos = convertF.PosToAbsPos(pos);
-  const px = convertF.PosToPixel(pos, bbox)
-  const height = await getHeight(image, px) + 2
-  // const height = await getHeightFromREST(abs_pos) + 2
+  const height = await getHeightFromREST(pos) + 2;
 
   system.update(o => {
 
     o.map.openPopup(showCreateRidgePopup(crd, pos, height))
-
     return o
   })
 }
@@ -48,7 +41,7 @@ function showCreateRidgePopup(crd: Crd, pos: Pos, height: number) {
 
       // Get values.
       let label = input.value
-      let ridgePoints = await getRidgePoints(pos, height)
+      let ridgePoints = await getRidgePoints(pos)
 
       // Create the mountain curve.
       let ridge = createRidge(label, ridgePoints, crd, height)

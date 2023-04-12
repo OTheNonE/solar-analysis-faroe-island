@@ -355,7 +355,6 @@ function showDatasets(newDatasets: ChartDataset[]) {
       })
 
       if (!inArray && newValue.label != "Sun") {
-        console.log('hmm')
         currentDatasets.push(newValue)
       }
 
@@ -372,7 +371,6 @@ function showDatasets(newDatasets: ChartDataset[]) {
       })
 
       if (!inArray && currentValue.label != "Sun") {
-        console.log('woow')
         currentDatasets.splice(index, 1)
       }
 

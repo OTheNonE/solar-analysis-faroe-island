@@ -36,11 +36,11 @@
     let crd_temp = {lat: e.latlng.lat, lng: e.latlng.lng}
     let abs_pos_temp = convertF.LatLngToAbsPos(crd_temp);
     let pos_temp = convertF.LatLngToPos(crd_temp)
-    let bbox = $system.heightMap.boundingBox;
-    let px = convertF.PosToPixel(pos_temp, bbox)
-
-    // let level_temp = await getHeight(px)
     let level_temp = await getHeightFromREST(abs_pos_temp)
+
+    // let bbox = $system.heightMap.boundingBox;
+    // let px = convertF.PosToPixel(pos_temp, bbox)
+    // let level_temp = await getHeight(px)
 
     pos = {
       x: pos_temp.x.toFixed(0),

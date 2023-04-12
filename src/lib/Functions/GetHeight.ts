@@ -3,8 +3,7 @@
 import { get } from 'svelte/store';
 
 // Imports from Stores.svelte:
-import type { Window } from "src/lib/Stores"
-import type { Point, Pos, Px } from "src/lib/Stores"
+import type { Point, Pos, Px, Window } from "src/lib/Stores";
 
 // Imports from function typescript files:
 import type { GeoTIFFImage, TypedArray } from 'geotiff';

@@ -31,7 +31,7 @@
     "leaflet": "^1.9.3",
     "proj4": "^2.9.0",
     "proj4leaflet": "^1.0.2",
-    "require": "^2.4.20",
+    "require": "^0.4.4",
     "requirejs": "^2.3.6",
     "split-grid": "^1.0.11",
     "suncalc": "^1.9.0",

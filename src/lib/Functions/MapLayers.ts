@@ -1,15 +1,9 @@
 
-// Svelte imports:
-import { get } from 'svelte/store';
-
 // Library imports:
 import L from "leaflet";
 
 // Imports from Stores.svelte:
 import type { Crd } from "src/lib/Stores"
-
-// Imports from function typescript files:
-import { chartF } from './Chart';
 
 
 export function createPolyline(crds?: Crd[]) {
