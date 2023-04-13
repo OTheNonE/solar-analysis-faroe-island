@@ -5,6 +5,15 @@ import L from "leaflet";
 // Imports from Stores.svelte:
 import type { Crd } from "src/lib/Stores"
 
+var markerIcon = L.icon({
+  iconUrl: 'marker.svg',
+  shadowUrl: 'marker-shadow.svg',
+
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+})
 
 export function createPolyline(crds?: Crd[]) {
 
@@ -16,10 +25,11 @@ export function createPolyline(crds?: Crd[]) {
 }
 
 export function createMarker(crd?: Crd) {
+
   if (crd) {
-    return L.marker(crd)
+    return L.marker(crd, { icon: markerIcon })
   } else {
-    return L.marker([0,0])
+    return L.marker([0,0], { icon: markerIcon })
   }
 }
 

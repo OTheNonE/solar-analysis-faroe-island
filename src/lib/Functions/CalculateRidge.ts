@@ -114,10 +114,37 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
   let data = await getHeight(image, window);
 
   // The point array keeping track of the points with the highest r value:
-  let ridgePoints: Point[] = ridgePointsIn ? ridgePointsIn : new Array(360 / dv_deg)
-  let ridgePointsLength = 360 / dv_deg;
 
- 
+  let ridgePointsLength = 360 / dv_deg;
+  
+  // let ridgePoints: Point[] = []
+  // if (!ridgePointsIn) {
+
+  //   const r_earth = 6371000;
+  //   const d_horizon = Math.sqrt(h_m * h_m + 2 * r_earth * h_m);
+  //   const h_horizon = -r_earth * h_m / (r_earth + h_m);
+  //   const r_horizon = (h_horizon - h_m) / d_horizon;
+  //   const v_horizon = Math.asin(r_earth / (r_earth + h_m))
+
+  //   for (let index = 0; index < ridgePointsLength; index++) {
+  //     let dv = index * dv_deg;
+
+  //     ridgePoints.push({
+  //       x: -Math.sin(-dv),
+  //       y: Math.cos(-dv),
+  //       r: r_horizon,
+  //       h: h_horizon,
+  //       azi: -dv,
+  //       alt: Math.atan2(h_horizon - h_m, d_horizon),
+  //       d: d_horizon,
+  //     })
+  //   }
+  // }
+
+  
+  let ridgePoints: Point[] = ridgePointsIn ? ridgePointsIn : Array(ridgePointsLength)
+
+  
 
   // Loop through every point...
   for (let i = 0; i < data.heights.length; i++) {
