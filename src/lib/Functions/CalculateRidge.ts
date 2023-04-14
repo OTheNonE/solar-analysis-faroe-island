@@ -9,6 +9,8 @@ import { createMarker, createPolyline } from "./MapLayers";
 import type { GeoTIFFImage } from "geotiff";
 import { getBoundingBox, getGeoTIFFImage } from "./FetchFunctions";
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 interface getRidgePointSettings {
   image: GeoTIFFImage,
   boundingBox: BoundingBox,
@@ -76,6 +78,9 @@ export async function getRidgePoints(pos_m: Pos) {
   let end = Date.now()
   console.log(`Function execution time is: ${end-start} ms`)
 
+  console.log(ridgePoints_5M)
+
+
   return ridgePoints_5M
 }
 
@@ -92,6 +97,8 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
   
   let center = get(system).settings.center_of_FO;
   let d_min = get(system).settings.d_min;
+
+  const r_earth = 6371000;
   
   // Get bounding box values:
   let map_resolution = (bbox.heightRatio + bbox.widthRatio) / 2
@@ -117,34 +124,36 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
 
   let ridgePointsLength = 360 / dv_deg;
   
-  // let ridgePoints: Point[] = []
-  // if (!ridgePointsIn) {
+  let ridgePoints: Point[] = []
+  if (!ridgePointsIn) {
 
-  //   const r_earth = 6371000;
-  //   const d_horizon = Math.sqrt(h_m * h_m + 2 * r_earth * h_m);
-  //   const h_horizon = -r_earth * h_m / (r_earth + h_m);
-  //   const r_horizon = (h_horizon - h_m) / d_horizon;
-  //   const v_horizon = Math.asin(r_earth / (r_earth + h_m))
+    const d_horizon = Math.sqrt(h_m * h_m + 2 * r_earth * h_m);
+    const h_horizon = -r_earth * h_m / (r_earth + h_m);
+    const r_horizon = (h_horizon - h_m) / d_horizon;
+    const v_horizon = Math.asin(r_earth / (r_earth + h_m))
 
-  //   for (let index = 0; index < ridgePointsLength; index++) {
-  //     let dv = index * dv_deg;
+    for (let index = 0; index < ridgePointsLength; index++) {
+      let dv = index * dv_deg / 180 * Math.PI;
 
-  //     ridgePoints.push({
-  //       x: -Math.sin(-dv),
-  //       y: Math.cos(-dv),
-  //       r: r_horizon,
-  //       h: h_horizon,
-  //       azi: -dv,
-  //       alt: Math.atan2(h_horizon - h_m, d_horizon),
-  //       d: d_horizon,
-  //     })
-  //   }
-  // }
+      ridgePoints.push({
+        x: -d_horizon * Math.sin(-dv),
+        y: d_horizon * Math.cos(-dv),
+        r: r_horizon,
+        h: h_horizon,
+        azi: -dv * 180 / Math.PI,
+        alt: v_horizon * 180 / Math.PI,
+        d: d_horizon,
+      })
+    }
+    console.log(ridgePoints)
+    // await delay(4000)
 
+  } else {
+    ridgePoints = ridgePointsIn
+  }
   
-  let ridgePoints: Point[] = ridgePointsIn ? ridgePointsIn : Array(ridgePointsLength)
+  // let ridgePoints: Point[] = ridgePointsIn ? ridgePointsIn : Array(ridgePointsLength)
 
-  
 
   // Loop through every point...
   for (let i = 0; i < data.heights.length; i++) {
@@ -181,7 +190,7 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
     }
 
     // Calculate the height to distance ratio (h/d):
-    let r = (height - h_m) / d_abs
+    let r = (height - d_abs**2 / (2 * r_earth) - h_m) / d_abs
     
     // Calculate the radius of the points area:
     let v_c = 1.4241 * map_resolution / d_abs
@@ -197,6 +206,8 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
 
       // If the calculated ratio is greater than the current, replace it.
       if (ridgePoints[index] == undefined || ridgePoints[index].r < r) {
+        
+        // if (height == 0) { console.log(`d = ${d_abs}, r = ${r}`) }
                   
         let pos = {
           x: pos_wrt_bbox.x - center.x + bbox.xmin, 

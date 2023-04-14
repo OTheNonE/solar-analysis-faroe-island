@@ -53,8 +53,8 @@ export let optionsHillshade: ChartOptions = {
     },
     y: {
       type: 'linear',
-      min: 0,
-      max: 45,
+      // min: 0,
+      // max: 45,
     }
   },
 
