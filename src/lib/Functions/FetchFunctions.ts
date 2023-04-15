@@ -1,9 +1,9 @@
 import { GeoTIFFImage, fromArrayBuffer } from "geotiff"
 import type { BoundingBox } from "../Stores";
 
-export async function getGeoTIFFImage(url: string) {
+export async function getGeoTIFFImage(url: string | URL, options?: RequestInit) {
   
-  return fetch(url)
+  return fetch(url, options)
     .then(response  => response.arrayBuffer())
     .then(tiff      => fromArrayBuffer(tiff))
     .then(result    => result.getImage())

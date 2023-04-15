@@ -4,8 +4,8 @@ import { system } from "../Stores";
 import { getHeight } from "./GetHeight";
 import { convertF } from "./ConvertUnit";
 import { isOverlapping2D, keepValueBetween } from "./Functions";
-import { fromArrayBuffer, type GeoTIFFImage } from "geotiff";
 import { getBoundingBox, getGeoTIFFImage } from "./FetchFunctions";
+import type { GeoTIFFImage } from "geotiff";
 
 interface getRidgePointSettings {
   image: GeoTIFFImage,
@@ -57,11 +57,9 @@ export async function getRidgePoints_Init(pos_m: Pos) {
 
   // let start = Date.now()
 
-  const DSM_25M = 'FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif';
-  const DSM_5M = 'FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif';
   
-  // Load the 25M resolution map.
-  // let image_25M = await getGeoTIFFImage(DSM_25M);
+  const DSM_25M = new URL('FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif', import.meta.url);
+  const DSM_5M = new URL('FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif', import.meta.url);
   
   let options: RequestInit = {
     method: 'GET',
@@ -70,63 +68,59 @@ export async function getRidgePoints_Init(pos_m: Pos) {
       'Authorization': 'Bearer my_token'
     }
   }
-  let image_25M = await fetch(DSM_25M, options)
-    // .then(response  => response.arrayBuffer())
-    .then(tiff => console.log(tiff))
-    // .then(tiff      => fromArrayBuffer(tiff))
-    // .then(result    => result.getImage())
+
+  // Load the 25M resolution map.
+  let image_25M = await getGeoTIFFImage(DSM_25M, options);
+  let bbox_25M = getBoundingBox(image_25M);
   
-  // let bbox_25M = getBoundingBox(image_25M);
+  let px_m = convertF.PosToPixel(pos_m, bbox_25M)
+  let h_m = await getHeight(image_25M, px_m) + 2.5
 
-  // let px_m = convertF.PosToPixel(pos_m, bbox_25M)
-  // let h_m = await getHeight(image_25M, px_m) + 2.5
-  let h_m = 50
+  // Get the ridge from the 25M map.
+  let ridgePoints_25M = await _getRidgePoints(pos_m, h_m, {
+    image: image_25M,
+    boundingBox: bbox_25M,
+    dataset_length: 360,
+  })
 
-  // // Get the ridge from the 25M map.
-  // let ridgePoints_25M = await _getRidgePoints(pos_m, h_m, {
-  //   image: image_25M,
-  //   boundingBox: bbox_25M,
-  //   dataset_length: 360,
-  // })
-
-  // // Load the 5M resolution map.
-  // let image_5M = await getGeoTIFFImage(DSM_5M);
-  // let bbox_5M = getBoundingBox(image_5M);
+  // Load the 5M resolution map.
+  let image_5M = await getGeoTIFFImage(DSM_5M, options);
+  let bbox_5M = getBoundingBox(image_5M);
   
-  // // Specify the radius of merging.
-  // let radius = Math.floor(1000);
+  // Specify the radius of merging.
+  let radius = Math.floor(1000);
 
-  // // Convert all points found in the ridge from 25M to windows.
-  // let windows = getMergedWindows(ridgePoints_25M, radius)
+  // Convert all points found in the ridge from 25M to windows.
+  let windows = getMergedWindows(ridgePoints_25M, radius)
 
-  // // Map the position values [m] to pixel values [#].
-  // windows = windows.map(window => {
+  // Map the position values [m] to pixel values [#].
+  windows = windows.map(window => {
 
-  //   let pos_min: Pos = { x: window.xmin, y: window.ymin }
-  //   let pos_max: Pos = { x: window.xmax, y: window.ymax }
+    let pos_min: Pos = { x: window.xmin, y: window.ymin }
+    let pos_max: Pos = { x: window.xmax, y: window.ymax }
 
-  //   let px_min = convertF.PosToPixel(pos_min, bbox_5M);
-  //   let px_max = convertF.PosToPixel(pos_max, bbox_5M);
+    let px_min = convertF.PosToPixel(pos_min, bbox_5M);
+    let px_max = convertF.PosToPixel(pos_max, bbox_5M);
 
-  //   return { xmin: px_min.x, ymin: px_min.y, xmax: px_max.x, ymax: px_max.y }
-  // })
+    return { xmin: px_min.x, ymin: px_min.y, xmax: px_max.x, ymax: px_max.y }
+  })
 
-  // // Find new ridges from 5M resolution map using the found windows.
+  // Find new ridges from 5M resolution map using the found windows.
   let dataset_length_5M = 360 * 2;
   let ridgePoints_5M: Point[] = createInitialRidge(h_m, pos_m, dataset_length_5M);
-  // for (let i = 0; i < windows.length; i++) {
+  for (let i = 0; i < windows.length; i++) {
 
-  //   await _getRidgePoints(pos_m, h_m, {
-  //     image: image_5M,
-  //     boundingBox: bbox_5M,
-  //     dataset_length: dataset_length_5M,
-  //     window: windows[i],
-  //     ridgePointsIn: ridgePoints_5M,
-  //   })
-  // }
+    await _getRidgePoints(pos_m, h_m, {
+      image: image_5M,
+      boundingBox: bbox_5M,
+      dataset_length: dataset_length_5M,
+      window: windows[i],
+      ridgePointsIn: ridgePoints_5M,
+    })
+  }
 
-  // // let end = Date.now()
-  // // console.log(`Function execution time is: ${end-start} ms`)
+  // let end = Date.now()
+  // console.log(`Function execution time is: ${end-start} ms`)
 
   return ridgePoints_5M
 }
