@@ -5,8 +5,9 @@ import { getHeight, getHeightFromREST } from "./GetHeight"
 import { system, type Pos, type Ridge } from "../Stores"
 import type { Crd } from "../Stores"
 import { waitForElm } from "./Functions";
-import { createRidge, getRidgePoints } from "./CalculateRidge";
-import { getBoundingBox } from "./FetchFunctions";
+import { getRidgePoints } from "./CalculateRidge";
+import { createRidge } from "./MapLayers";
+import Worker from 'web-worker';
 
 
 

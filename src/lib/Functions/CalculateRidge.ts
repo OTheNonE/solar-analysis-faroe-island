@@ -4,13 +4,8 @@ import { system } from "../Stores";
 import { getHeight } from "./GetHeight";
 import { convertF } from "./ConvertUnit";
 import { isOverlapping2D, keepValueBetween } from "./Functions";
-import { chartF } from "./Chart";
-import { createMarker, createPolyline } from "./MapLayers";
-import type { GeoTIFFImage } from "geotiff";
+import { fromArrayBuffer, type GeoTIFFImage } from "geotiff";
 import { getBoundingBox, getGeoTIFFImage } from "./FetchFunctions";
-import Worker from 'web-worker';
-
-const delay = ms => new Promise(res => setTimeout(res, ms));
 
 interface getRidgePointSettings {
   image: GeoTIFFImage,
@@ -20,65 +15,118 @@ interface getRidgePointSettings {
   ridgePointsIn?: Point[],
 }
 
-export async function getRidgePoints(pos_m: Pos) {
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
-  let start = Date.now()
+// When this script is created as worker, this will wait for its inside to be finished.
+addEventListener('message', async (e:MessageEvent<Pos>) => {
+  let pos = e.data;
+  let points = await getRidgePoints_Init(pos)
+  postMessage(points)
+})
+
+// The function calling the worker.
+export async function getRidgePoints(pos: Pos) {
+
+  // Create a worker
+  const url = new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url)
+  const worker = new Worker(url, { type: 'module' })
+
+  // Send a value to the worker.
+  worker.postMessage(pos)
+
+  // Wait for the worker to process the sent value and recieve the calculated value.
+  const result: Point[] = await runWorker(worker);
+
+  // Terminate the worker.
+  worker.terminate();
+
+  return result
+}
+
+// An await function that will wait for a message from the worker
+function runWorker(worker: Worker): Promise<Point[]> {
+  return new Promise(resolve => {
+    worker.onmessage = (e:MessageEvent<Point[]>) => {
+      let points = e.data
+      resolve(points)
+    }
+  })
+}
+
+export async function getRidgePoints_Init(pos_m: Pos) {
+
+  // let start = Date.now()
 
   const DSM_25M = 'FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif';
   const DSM_5M = 'FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif';
   
   // Load the 25M resolution map.
-  let image_25M = await getGeoTIFFImage(DSM_25M);
-  let bbox_25M = getBoundingBox(image_25M);
-
-  let px_m = convertF.PosToPixel(pos_m, bbox_25M)
-  let h_m = await getHeight(image_25M, px_m) + 2.5
-
-  // Get the ridge from the 25M map.
-  let ridgePoints_25M = await _getRidgePoints(pos_m, h_m, {
-    image: image_25M,
-    boundingBox: bbox_25M,
-    dataset_length: 360,
-  })
-
-  // Load the 5M resolution map.
-  let image_5M = await getGeoTIFFImage(DSM_5M);
-  let bbox_5M = getBoundingBox(image_5M);
+  // let image_25M = await getGeoTIFFImage(DSM_25M);
   
-  // Specify the radius of merging.
-  let radius = Math.floor(1000);
+  let options: RequestInit = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer my_token'
+    }
+  }
+  let image_25M = await fetch(DSM_25M, options)
+    // .then(response  => response.arrayBuffer())
+    .then(tiff => console.log(tiff))
+    // .then(tiff      => fromArrayBuffer(tiff))
+    // .then(result    => result.getImage())
+  
+  // let bbox_25M = getBoundingBox(image_25M);
 
-  // Convert all points found in the ridge from 25M to windows.
-  let windows = getMergedWindows(ridgePoints_25M, radius)
+  // let px_m = convertF.PosToPixel(pos_m, bbox_25M)
+  // let h_m = await getHeight(image_25M, px_m) + 2.5
+  let h_m = 50
 
-  // Map the position values [m] to pixel values [#].
-  windows = windows.map(window => {
+  // // Get the ridge from the 25M map.
+  // let ridgePoints_25M = await _getRidgePoints(pos_m, h_m, {
+  //   image: image_25M,
+  //   boundingBox: bbox_25M,
+  //   dataset_length: 360,
+  // })
 
-    let pos_min: Pos = { x: window.xmin, y: window.ymin }
-    let pos_max: Pos = { x: window.xmax, y: window.ymax }
+  // // Load the 5M resolution map.
+  // let image_5M = await getGeoTIFFImage(DSM_5M);
+  // let bbox_5M = getBoundingBox(image_5M);
+  
+  // // Specify the radius of merging.
+  // let radius = Math.floor(1000);
 
-    let px_min = convertF.PosToPixel(pos_min, bbox_5M);
-    let px_max = convertF.PosToPixel(pos_max, bbox_5M);
+  // // Convert all points found in the ridge from 25M to windows.
+  // let windows = getMergedWindows(ridgePoints_25M, radius)
 
-    return { xmin: px_min.x, ymin: px_min.y, xmax: px_max.x, ymax: px_max.y }
-  })
+  // // Map the position values [m] to pixel values [#].
+  // windows = windows.map(window => {
 
-  // Find new ridges from 5M resolution map using the found windows.
+  //   let pos_min: Pos = { x: window.xmin, y: window.ymin }
+  //   let pos_max: Pos = { x: window.xmax, y: window.ymax }
+
+  //   let px_min = convertF.PosToPixel(pos_min, bbox_5M);
+  //   let px_max = convertF.PosToPixel(pos_max, bbox_5M);
+
+  //   return { xmin: px_min.x, ymin: px_min.y, xmax: px_max.x, ymax: px_max.y }
+  // })
+
+  // // Find new ridges from 5M resolution map using the found windows.
   let dataset_length_5M = 360 * 2;
   let ridgePoints_5M: Point[] = createInitialRidge(h_m, pos_m, dataset_length_5M);
-  for (let i = 0; i < windows.length; i++) {
+  // for (let i = 0; i < windows.length; i++) {
 
-    await _getRidgePoints(pos_m, h_m, {
-      image: image_5M,
-      boundingBox: bbox_5M,
-      dataset_length: dataset_length_5M,
-      window: windows[i],
-      ridgePointsIn: ridgePoints_5M,
-    })
-  }
+  //   await _getRidgePoints(pos_m, h_m, {
+  //     image: image_5M,
+  //     boundingBox: bbox_5M,
+  //     dataset_length: dataset_length_5M,
+  //     window: windows[i],
+  //     ridgePointsIn: ridgePoints_5M,
+  //   })
+  // }
 
-  let end = Date.now()
-  console.log(`Function execution time is: ${end-start} ms`)
+  // // let end = Date.now()
+  // // console.log(`Function execution time is: ${end-start} ms`)
 
   return ridgePoints_5M
 }
@@ -268,31 +316,4 @@ function createInitialRidge(h_m: number, pos_m: Pos, dataset_length: number) {
   }
 
   return ridgePoints
-}
-  
-export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: number) {
-  let color = "#00ff00";
-  let crds = convertF.PosToLatLng(ridgePoints)
-
-  let ridge: Ridge = {
-    color,
-    label,
-    points: ridgePoints,
-    dataset: chartF.createDataset(label, color),
-    marker: {
-      onMap: createMarker(crd),
-      crd,
-      pos: convertF.LatLngToPos(crd),
-      mapHeight: h
-    },
-
-    polyline: {
-      crds,
-      onMap: createPolyline(crds).setStyle({color}),
-    }
-  }
-
-  chartF.updateDataset(ridge)
-
-  return ridge
 }

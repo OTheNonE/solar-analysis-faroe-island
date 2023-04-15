@@ -6,13 +6,10 @@
   import ChartSettings from './ChartSettings.svelte';
   import { convertF } from './Functions/ConvertUnit';
   import { getBoundingBox, getGeoTIFFImage } from './Functions/FetchFunctions';
-  
-  function runWebWorker() {
-    const worker = new Worker(
-      new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url),
-      { type: 'module' }
-    )
-  }
+  import Worker from 'web-worker';
+  // import { callWorker } from './Functions/CalculateRidge';
+
+  let a = 0;
 
 </script>
 
@@ -25,9 +22,9 @@
     console.log($system)
   </button>
 
-  <button on:click={runWebWorker}>
-    Full image
-  </button>
+  <!-- <button on:click={async () => a = await callWorker(a)}>
+    a = {a}
+  </button> -->
 <!-- 
   <button on:click={tester_2}>
     Spread image

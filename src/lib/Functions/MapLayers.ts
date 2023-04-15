@@ -1,9 +1,11 @@
 
 // Library imports:
 import L from "leaflet";
+import { convertF } from "./ConvertUnit";
+import { chartF } from "./Chart";
 
 // Imports from Stores.svelte:
-import type { Crd } from "src/lib/Stores"
+import type { Point, Ridge, Crd } from "../Stores";
 
 var markerIcon = L.icon({
   iconUrl: 'marker.svg',
@@ -38,4 +40,31 @@ export function updateColorOfLayer(layer, color) {
     color,
   })
 
+}
+
+export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: number) {
+  let color = "#00ff00";
+  let crds = convertF.PosToLatLng(ridgePoints)
+
+  let ridge: Ridge = {
+    color,
+    label,
+    points: ridgePoints,
+    dataset: chartF.createDataset(label, color),
+    marker: {
+      onMap: createMarker(crd),
+      crd,
+      pos: convertF.LatLngToPos(crd),
+      mapHeight: h
+    },
+
+    polyline: {
+      crds,
+      onMap: createPolyline(crds).setStyle({color}),
+    }
+  }
+
+  chartF.updateDataset(ridge)
+
+  return ridge
 }
