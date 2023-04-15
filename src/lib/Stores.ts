@@ -106,7 +106,7 @@ let container: Container = {
   settings: {
     dv: 1,
     radius: 10000 / 2,
-    d_min: 25,
+    d_min: 100,
     center_of_FO: {x: 205700, y: 884500}
   },
 };

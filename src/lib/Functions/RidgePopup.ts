@@ -8,6 +8,8 @@ import { waitForElm } from "./Functions";
 import { createRidge, getRidgePoints } from "./CalculateRidge";
 import { getBoundingBox } from "./FetchFunctions";
 
+
+
 waitForElm('#leafletmap').then(() => {
   system.update(o => {
   

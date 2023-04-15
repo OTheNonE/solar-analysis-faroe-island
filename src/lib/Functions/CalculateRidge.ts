@@ -8,18 +8,21 @@ import { chartF } from "./Chart";
 import { createMarker, createPolyline } from "./MapLayers";
 import type { GeoTIFFImage } from "geotiff";
 import { getBoundingBox, getGeoTIFFImage } from "./FetchFunctions";
+import Worker from 'web-worker';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 interface getRidgePointSettings {
   image: GeoTIFFImage,
   boundingBox: BoundingBox,
-  dv_deg: number,
+  dataset_length: number,
   window?: Window,
   ridgePointsIn?: Point[],
 }
 
 export async function getRidgePoints(pos_m: Pos) {
+
+  let start = Date.now()
 
   const DSM_25M = 'FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif';
   const DSM_5M = 'FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif';
@@ -35,7 +38,7 @@ export async function getRidgePoints(pos_m: Pos) {
   let ridgePoints_25M = await _getRidgePoints(pos_m, h_m, {
     image: image_25M,
     boundingBox: bbox_25M,
-    dv_deg: 1,
+    dataset_length: 360,
   })
 
   // Load the 5M resolution map.
@@ -60,16 +63,15 @@ export async function getRidgePoints(pos_m: Pos) {
     return { xmin: px_min.x, ymin: px_min.y, xmax: px_max.x, ymax: px_max.y }
   })
 
-  let start = Date.now()
-
   // Find new ridges from 5M resolution map using the found windows.
-  let ridgePoints_5M: Point[] = [];
+  let dataset_length_5M = 360 * 2;
+  let ridgePoints_5M: Point[] = createInitialRidge(h_m, pos_m, dataset_length_5M);
   for (let i = 0; i < windows.length; i++) {
 
     await _getRidgePoints(pos_m, h_m, {
       image: image_5M,
       boundingBox: bbox_5M,
-      dv_deg: 1/2,
+      dataset_length: dataset_length_5M,
       window: windows[i],
       ridgePointsIn: ridgePoints_5M,
     })
@@ -77,9 +79,6 @@ export async function getRidgePoints(pos_m: Pos) {
 
   let end = Date.now()
   console.log(`Function execution time is: ${end-start} ms`)
-
-  console.log(ridgePoints_5M)
-
 
   return ridgePoints_5M
 }
@@ -92,8 +91,9 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
   let ridgePointsIn = options.ridgePointsIn
 
   // The angles are divided by every dv degrees:
-  let dv_deg = options.dv_deg;
-  let dv_rad = dv_deg * Math.PI / 180;
+  let dataset_length = options.dataset_length;
+  let dv_rad = 2 * Math.PI / dataset_length;
+  let dv_deg = 360 / dataset_length;
   
   let center = get(system).settings.center_of_FO;
   let d_min = get(system).settings.d_min;
@@ -121,46 +121,14 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
   let data = await getHeight(image, window);
 
   // The point array keeping track of the points with the highest r value:
-
-  let ridgePointsLength = 360 / dv_deg;
-  
-  let ridgePoints: Point[] = []
-  if (!ridgePointsIn) {
-
-    const d_horizon = Math.sqrt(h_m * h_m + 2 * r_earth * h_m);
-    const h_horizon = -r_earth * h_m / (r_earth + h_m);
-    const r_horizon = (h_horizon - h_m) / d_horizon;
-    const v_horizon = Math.asin(r_earth / (r_earth + h_m))
-
-    for (let index = 0; index < ridgePointsLength; index++) {
-      let dv = index * dv_deg / 180 * Math.PI;
-
-      ridgePoints.push({
-        x: -d_horizon * Math.sin(-dv),
-        y: d_horizon * Math.cos(-dv),
-        r: r_horizon,
-        h: h_horizon,
-        azi: -dv * 180 / Math.PI,
-        alt: v_horizon * 180 / Math.PI,
-        d: d_horizon,
-      })
-    }
-    console.log(ridgePoints)
-    // await delay(4000)
-
-  } else {
-    ridgePoints = ridgePointsIn
-  }
-  
-  // let ridgePoints: Point[] = ridgePointsIn ? ridgePointsIn : Array(ridgePointsLength)
-
+  let ridgePoints = ridgePointsIn ? ridgePointsIn : createInitialRidge(h_m, pos_m, dataset_length);
 
   // Loop through every point...
   for (let i = 0; i < data.heights.length; i++) {
 
-    // If the given height is 0 or 255 (255 is seawater), then make it 0.
+    // If the given height is 0 or 255 (255 is seawater), then continue (wont be highest value).
     let height = data.heights[i];
-    if (height == 255) height = 0;
+    if (height == 255 || height == 0) continue;
 
     // Calculate the pixel coordinate.
     let px = {
@@ -202,7 +170,7 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
     let diff = end - start
     for (let j = 0; j <= diff; j++) {
 
-      let index = keepValueBetween(j + start, 0, ridgePointsLength);
+      let index = keepValueBetween(j + start, 0, dataset_length);
 
       // If the calculated ratio is greater than the current, replace it.
       if (ridgePoints[index] == undefined || ridgePoints[index].r < r) {
@@ -210,8 +178,8 @@ async function _getRidgePoints(pos_m: Pos, h_m: number, options: getRidgePointSe
         // if (height == 0) { console.log(`d = ${d_abs}, r = ${r}`) }
                   
         let pos = {
-          x: pos_wrt_bbox.x - center.x + bbox.xmin, 
-          y: pos_wrt_bbox.y - center.y + bbox.ymax
+          x: pos_wrt_bbox.x + bbox.xmin - center.x, 
+          y: pos_wrt_bbox.y + bbox.ymax - center.y
         }
         
         let alt = Math.atan2(height - h_m, d_abs);
@@ -271,6 +239,35 @@ function getMergedWindows(points: Point[], radius: number) {
   }
 
   return windows
+}
+
+function createInitialRidge(h_m: number, pos_m: Pos, dataset_length: number) {
+  const dv_rad = 2 * Math.PI / dataset_length;
+  const r_earth = 63001041
+
+  const d_horizon = Math.sqrt(h_m * h_m + 2 * r_earth * h_m);
+  const h_horizon = -r_earth * h_m / (r_earth + h_m);
+  const r_horizon = (h_horizon - h_m) / d_horizon;
+  const alt_horizon = Math.atan2(h_horizon - h_m, d_horizon)
+  // const v_horizon = Math.asin(r_earth / (r_earth + h_m))
+
+  let ridgePoints: Point[] = [];
+
+  for (let index = 0; index < dataset_length; index++) {
+    let dv = index * dv_rad;
+
+    ridgePoints.push({
+      x: pos_m.x - d_horizon * Math.sin(-dv),
+      y: pos_m.y + d_horizon * Math.cos(-dv),
+      r: r_horizon,
+      h: h_horizon,
+      azi: dv * 180 / Math.PI,
+      alt: alt_horizon * 180 / Math.PI,
+      d: d_horizon,
+    })
+  }
+
+  return ridgePoints
 }
   
 export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: number) {
