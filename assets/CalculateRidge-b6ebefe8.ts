@@ -28,8 +28,11 @@ addEventListener('message', async (e:MessageEvent<Pos>) => {
 export async function getRidgePoints(pos: Pos) {
 
   // Create a worker
-  const url = new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url)
-  const worker = new Worker(url, { type: 'module' })
+  const url = new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url);
+  const worker = new Worker(
+    url,
+    { type: 'module' }
+  )
 
   // Send a value to the worker.
   worker.postMessage(pos)
