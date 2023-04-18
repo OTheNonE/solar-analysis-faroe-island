@@ -6,6 +6,7 @@ import { convertF } from "./ConvertUnit";
 import { isOverlapping2D, keepValueBetween } from "./Functions";
 import { getBoundingBox, getGeoTIFFImage } from "./FetchFunctions";
 import type { GeoTIFFImage } from "geotiff";
+import workerUrl from "src/lib/Functions/CalculateRidge?worker&url";
 
 interface getRidgePointSettings {
   image: GeoTIFFImage,
@@ -34,8 +35,10 @@ export async function getRidgePoints(pos: Pos) {
   // https://www.taniarascia.com/how-to-use-webpack/
 
   // Create a worker
-  const url = new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url);
-  const worker = new Worker(url, { type: 'module' })
+  // const url = new URL("src/lib/Functions/CalculateRidge?worker&url", import.meta.url);
+  // const worker = new Worker(url, { type: 'module' })
+
+  const worker = new Worker(workerUrl, { type: 'module' })
 
   // Send a value to the worker.
   worker.postMessage(pos)
