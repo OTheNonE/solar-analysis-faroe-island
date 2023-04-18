@@ -20,7 +20,7 @@ export function isOverlapping2D(box1: Window, box2: Window) {
           isOverlapping1D({min: box1.ymin, max: box1.ymax}, {min: box2.ymin, max: box2.ymax})
 }
 
-export function keepValueBetween(value, bottom, top) {
+export function keepValueBetween(value: number, bottom: number, top: number) {
   while (value < bottom || value >= top) {
     if (value < bottom) {
       value += top - bottom;
@@ -35,7 +35,7 @@ export function removeDecimals(value: number, decimals: number) {
   return Math.trunc(value * Math.pow(10, decimals)) / Math.pow(10, decimals)
 }
 
-export function removeObjectFromArray(array, object) {
+export function removeObjectFromArray(array: Array<any>, object: any) {
   
   array.forEach((value, index) => {
     if (object === value) {

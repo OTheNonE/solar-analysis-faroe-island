@@ -24,6 +24,7 @@
     "@types/proj4leaflet": "^1.0.7",
     "@types/suncalc": "^1.9.0",
     "chart.js": "^4.2.1",
+    "comlink": "^4.4.1",
     "convert-array-to-csv": "^2.0.0",
     "file-saver": "^2.0.5",
     "geotiff": "^2.0.7",

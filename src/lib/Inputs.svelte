@@ -6,10 +6,6 @@
   import ChartSettings from './ChartSettings.svelte';
   import { convertF } from './Functions/ConvertUnit';
   import { getBoundingBox, getGeoTIFFImage } from './Functions/FetchFunctions';
-  import Worker from 'web-worker';
-  // import { callWorker } from './Functions/CalculateRidge';
-
-  let a = 0;
 
 </script>
 
@@ -22,9 +18,9 @@
     console.log($system)
   </button>
 
-  <!-- <button on:click={async () => a = await callWorker(a)}>
-    a = {a}
-  </button> -->
+  <button on:click={() => console.log(document.URL)}>
+    weee
+  </button>
 <!-- 
   <button on:click={tester_2}>
     Spread image

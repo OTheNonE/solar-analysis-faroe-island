@@ -3,7 +3,7 @@ import type { BoundingBox } from "../Stores";
 
 export async function getGeoTIFFImage(url: string | URL, options?: RequestInit) {
   
-  return fetch(url, options)
+  return fetch(url)
     .then(response  => response.arrayBuffer())
     .then(tiff      => fromArrayBuffer(tiff))
     .then(result    => result.getImage())

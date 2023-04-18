@@ -26,9 +26,15 @@ addEventListener('message', async (e:MessageEvent<Pos>) => {
 
 // The function calling the worker.
 export async function getRidgePoints(pos: Pos) {
+  
+  // Les hetta:
+  // https://github.com/webpack/webpack/discussions/
+  
+  // Skal eg fara til webpack5 ístaðin fyri vite?
+  // https://www.taniarascia.com/how-to-use-webpack/
 
   // Create a worker
-  const url = new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url)
+  const url = new URL("src/lib/Functions/CalculateRidge.ts", import.meta.url);
   const worker = new Worker(url, { type: 'module' })
 
   // Send a value to the worker.
@@ -47,8 +53,7 @@ export async function getRidgePoints(pos: Pos) {
 function runWorker(worker: Worker): Promise<Point[]> {
   return new Promise(resolve => {
     worker.onmessage = (e:MessageEvent<Point[]>) => {
-      let points = e.data
-      resolve(points)
+      resolve(e.data)
     }
   })
 }
@@ -57,20 +62,12 @@ export async function getRidgePoints_Init(pos_m: Pos) {
 
   // let start = Date.now()
 
-  
-  const DSM_25M = new URL('FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif', import.meta.url);
-  const DSM_5M = new URL('FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif', import.meta.url);
-  
-  let options: RequestInit = {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer my_token'
-    }
-  }
+  const DSM_Base = new URL(import.meta.url)
+  const DSM_25M = new URL('FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif', DSM_Base.origin);
+  const DSM_5M = new URL('FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif', DSM_Base.origin);
 
   // Load the 25M resolution map.
-  let image_25M = await getGeoTIFFImage(DSM_25M, options);
+  let image_25M = await getGeoTIFFImage(DSM_25M);
   let bbox_25M = getBoundingBox(image_25M);
   
   let px_m = convertF.PosToPixel(pos_m, bbox_25M)
@@ -84,7 +81,7 @@ export async function getRidgePoints_Init(pos_m: Pos) {
   })
 
   // Load the 5M resolution map.
-  let image_5M = await getGeoTIFFImage(DSM_5M, options);
+  let image_5M = await getGeoTIFFImage(DSM_5M);
   let bbox_5M = getBoundingBox(image_5M);
   
   // Specify the radius of merging.
