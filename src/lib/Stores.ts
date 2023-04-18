@@ -60,11 +60,17 @@ interface Polyline {
   onMap: L.Polyline,
 }
 
+export interface Dataset {
+  type: ChartTypes,
+  empty: boolean,
+  dataset: ChartDataset
+}
+
 export interface Ridge {
   label: string,
   color: string,
   points: Point[],
-  dataset: ChartDataset,
+  datasets: Dataset[],
   marker: Marker,
   polyline: Polyline,
 }
@@ -78,7 +84,6 @@ interface ChartWindow {
   chart: Chart,
   selected: Ridge[],
   sun: Sun,
-
 }
 
 interface Container {

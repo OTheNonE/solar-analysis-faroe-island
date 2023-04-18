@@ -7,7 +7,7 @@ import SunCalc from 'suncalc';
 
 // Imports from Stores.svelte:
 import { system, type Ridge } from 'src/lib/Stores';
-import type { Pos, Crd, Dir, Point } from 'src/lib/Stores'
+import type { Pos, Crd, Dir, Point, Dataset } from 'src/lib/Stores'
 
 // Imports from function typescript files:
 import { angle360, getIntersection, isBetween, UnitTime } from './Functions';
@@ -134,7 +134,7 @@ export let optionsSunrise: ChartOptions = {
 
 
 // Functions:
-function updateChartType() {
+function changeChartType() {
 
   system.update(o => {
     
@@ -160,29 +160,38 @@ function updateChartType() {
 
 }
 
-function updateDataset(opt: {dataset: ChartDataset, points: Point[], label: string, color: string}) {
+function updateDataset(dataset: Dataset, opt: {points?: Point[], label?: string, color?: string}) {
 
-  let data: Pos[] = [];
-  let chartType = get(system).chart.chartType;
+  if (opt.points) {
 
-  if (chartType == "Hillshade") {
-    data = updateHillshadeDataset(opt.points);
+    let data: Pos[] = [];
 
-  } else if (chartType == "Sunrise") {
-    data = updateTwilightDataset(opt.points, "Sunrise")
+    if (dataset.type == "Hillshade") {
+      data = createHillshadeDataset(opt.points);
+  
+    } else if (dataset.type == "Sunrise") {
+      data = createTwilightDataset(opt.points, "Sunrise")
+  
+    } else if (dataset.type == "Sunset") {
+      data = createTwilightDataset(opt.points, "Sunset")
+    }
 
-  } else if (chartType == "Sunset") {
-    data = updateTwilightDataset(opt.points, "Sunset")
+    dataset.dataset.data = data;
   }
   
-  opt.dataset.label = opt.label;
-  opt.dataset.data = data;
-  opt.dataset.backgroundColor = opt.color;
-  opt.dataset.borderColor = opt.color;
+  if (opt.label) {
+    dataset.dataset.label = opt.label;
+  }
 
+  if (opt.color) {
+    dataset.dataset.backgroundColor = opt.color;
+    dataset.dataset.borderColor = opt.color;
+  }
+
+  
 }
 
-function updateHillshadeDataset(points: Point[]) {
+function createHillshadeDataset(points: Point[]) {
 
   let data: Pos[] = [];
   points.forEach(point => {
@@ -195,7 +204,7 @@ function updateHillshadeDataset(points: Point[]) {
   return data
 }
 
-function updateTwilightDataset(points: Point[], twilight: "Sunrise" | "Sunset") {
+function createTwilightDataset(points: Point[], twilight: "Sunrise" | "Sunset") {
 
   function getMountain(index: number): Dir {
     let mod = points.length
@@ -339,9 +348,29 @@ function updateSunDataset(dataset: ChartDataset, date: Date) {
 
 }
 
+function removeDataset(dataset: ChartDataset) {
+  system.update(o => {
+    if (o.chart.chart == undefined) {return o}
+
+    let currentDatasets = o.chart.chart.data.datasets
+
+    let index = currentDatasets.findIndex(x => x.label == dataset.label);
+
+    currentDatasets.splice(index, 1)
+
+    o.chart.chart.update();
+
+  })
+}
+
+function addDataset(dataset: ChartDataset) {
+
+}
+
 function showDatasets(newDatasets: ChartDataset[]) {
   system.update(o => {
     if (o.chart.chart == undefined) {return o}
+
     let currentDatasets = o.chart.chart.data.datasets
 
     // Check if new dataset is to be added:
@@ -466,5 +495,7 @@ export let chartF = {
   changeChartColor,
   showDatasets,
   updateDataset,
-  updateChartType
+  changeChartType,
+  removeDataset,
+  addDataset
 }

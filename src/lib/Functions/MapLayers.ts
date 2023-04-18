@@ -50,7 +50,11 @@ export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: nu
     color,
     label,
     points: ridgePoints,
-    dataset: chartF.createDataset(label, color),
+    datasets: [{
+      type: "Hillshade",
+      empty: true,
+      dataset: chartF.createDataset(label, color)
+    }],
     marker: {
       onMap: createMarker(crd),
       crd,
@@ -64,7 +68,11 @@ export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: nu
     }
   }
 
-  chartF.updateDataset(ridge)
+  chartF.updateDataset(ridge.datasets[0], {
+    points: ridge.points,
+    label: ridge.label,
+    color: ridge.color,
+  })
 
   return ridge
 }

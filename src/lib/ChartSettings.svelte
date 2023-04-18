@@ -10,9 +10,9 @@
   // Variables:
   let chartTypes: ChartTypes[] = ['Hillshade', 'Sunrise', 'Sunset']
   let selectedChart: ChartTypes = 'Hillshade';
-  let towns: Ridge[];
+  let locations: Ridge[];
   let selected: Ridge[] = [];
-  let noneSelect = 'none';
+  let noneSelect: 'none' | Ridge = 'none';
 
   $system.chart.sun = {
     dataset: undefined,
@@ -26,7 +26,7 @@
   // Dynamically updated:
   $: sun = $system.chart.sun;
   $: $system.chart.selected = selected;
-  $: towns = $system.stored.ridges;
+  $: locations = $system.stored.ridges;
 
   sun.dataset = chartF.createDataset('Sun', sun.color);
   chartF.updateSunDataset(sun.dataset, new Date(sun.date))
@@ -40,16 +40,20 @@
     }
   }
 
-  function addTown(town) {
+  function addTown(location: Ridge) {
     noneSelect = 'none';
-    selected = [...selected, town]
-    chartF.showDatasets(selected.map(a => a.dataset))
+    selected = [...selected, location]
+
+    let dataset = location.datasets.find(x => x.type == $system.chart.chartType)
+    chartF.addDataset(dataset.dataset)
   }
 
   function removeTown(index) {
-    selected.splice(index, 1)
+    let removed_location = selected.splice(index, 1)[0]
     selected = selected;
-    chartF.showDatasets(selected.map(a => a.dataset))
+
+    let dataset = removed_location.datasets.find(x => x.type == $system.chart.chartType)
+    chartF.removeDataset(dataset.dataset)
   }
 
   // function townSelected(town: Ridge, item?: Ridge) {
@@ -63,9 +67,9 @@
   //   return false
   // }
 
-  function townSelected(town: Ridge) {
+  function townSelected(location: Ridge) {
     for (let o of selected) {
-      if (town.label == o.label) {
+      if (location.label == o.label) {
         return true
       }
     }
@@ -84,7 +88,7 @@
 
   <header> Chart Type </header>
 
-  <select bind:value={$system.chart.chartType} on:change={chartF.updateChartType}>
+  <select bind:value={$system.chart.chartType} on:change={chartF.changeChartType}>
     {#each chartTypes as chartType}
     <option value={chartType}> {chartType} </option>
     {/each}
@@ -131,11 +135,11 @@
     <button class="placeholder"> Remove </button>
   
     <!-- {#key selected} Hesin blokkurin virkar áðrenn ein bygd verður vald... -->
-    <select disabled={selected.length == towns.length} 
+    <select disabled={selected.length == locations.length} 
     bind:value={noneSelect}
     on:change={() => {addTown(noneSelect)}}>
-      {#each towns as town} {#if !townSelected(town)}
-      <option value={town}> {town.label} </option>
+      {#each locations as location} {#if !townSelected(location)}
+      <option value={location}> {location.label} </option>
       {/if} {/each}
       <option value='none'> none </option>
     </select>

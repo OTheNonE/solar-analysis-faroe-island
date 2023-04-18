@@ -68,7 +68,7 @@ function showCreateRidgePopup(crd: Crd, pos: Pos, height: number) {
         o.map.closePopup()
 
         // Open new popup window.
-        o.map.openPopup(acceptNewRidge(crd, ridge))
+        o.map.openPopup(acceptNewRidgePopup(crd, ridge))
 
         return o
       })
@@ -99,7 +99,7 @@ function showCreateRidgePopup(crd: Crd, pos: Pos, height: number) {
 
 }
 
-function acceptNewRidge(crd: Crd, ridge: Ridge) {
+function acceptNewRidgePopup(crd: Crd, ridge: Ridge) {
 
   function addCurrentRidge() {
     system.update(o => {
