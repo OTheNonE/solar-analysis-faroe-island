@@ -40,6 +40,8 @@ export async function getRidgePoints(pos: Pos) {
 
   const worker = new Worker(workerUrl, { type: 'module' })
 
+  // const worker = new workerUrl()
+
   // Send a value to the worker.
   worker.postMessage(pos)
 
