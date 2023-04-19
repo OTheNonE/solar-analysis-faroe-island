@@ -7,6 +7,15 @@ export default defineConfig({
   base: "/solar-analysis-faroe-island/",
   plugins: [svelte()],
 
+  build: {
+    rollupOptions: {
+      output: {
+        format: "esm",
+        inlineDynamicImports: true,
+      }
+    }
+  },
+
   resolve: {
     alias: {
       src: path.resolve('src/'),

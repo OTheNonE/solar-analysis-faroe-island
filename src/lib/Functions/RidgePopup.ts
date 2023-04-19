@@ -7,7 +7,6 @@ import type { Crd } from "../Stores"
 import { waitForElm } from "./Functions";
 import { getRidgePoints } from "./CalculateRidge";
 import { createRidge } from "./MapLayers";
-import Worker from 'web-worker';
 
 
 

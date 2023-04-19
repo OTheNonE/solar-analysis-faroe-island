@@ -4,8 +4,7 @@
   import { fromArrayBuffer } from 'geotiff';
   import { system, type Pos } from 'src/lib/Stores';
   import ChartSettings from './ChartSettings.svelte';
-  import { convertF } from './Functions/ConvertUnit';
-  import { getBoundingBox, getGeoTIFFImage } from './Functions/FetchFunctions';
+
 
 </script>
 
@@ -18,7 +17,7 @@
     console.log($system)
   </button>
 
-  <button on:click={() => console.log(document.URL)}>
+  <button on:click={() => console.log("Wee")}>
     weee
   </button>
 <!-- 
