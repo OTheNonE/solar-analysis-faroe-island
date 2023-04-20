@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import path from 'path';
+import path, { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,8 +10,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        format: "esm",
-        inlineDynamicImports: true,
+        format: "es"
       }
     }
   },
