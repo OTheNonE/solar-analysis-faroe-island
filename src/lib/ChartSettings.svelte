@@ -2,57 +2,64 @@
 <script lang="ts">
   // Imports:
   import { system } from 'src/lib/Stores';
-  import SunCalc from 'suncalc';
-  import type { ChartTypes, Sun, Pos, Ridge } from 'src/lib/Stores';
+  import type { Sun, Pos, Ridge, ChartTypes } from 'src/lib/Stores';
+  import { chartTypes } from 'src/lib/Stores';
   import { chartF } from './Functions/Chart';
   import { updateColorOfLayer } from './Functions/MapLayers';
 
   // Variables:
-  let chartTypes: ChartTypes[] = ['Hillshade', 'Sunrise', 'Sunset']
-  let selectedChart: ChartTypes = 'Hillshade';
-  let locations: Ridge[];
-  let selected: Ridge[] = [];
+  let locations: Ridge[] = [];
+  let selected_ridges: Ridge[] = [];
   let noneSelect: 'none' | Ridge = 'none';
+  let chartType: ChartTypes = "Hillshade";
 
   $system.chart.sun = {
-    dataset: undefined,
+    dataset: chartF.createDataset('Sun', "#ffff00"),
     show: false,
     color: "#ffff00",
     date: "2022-01-01"
   }
-
   let sun = $system.chart.sun;
+  chartF.updateSunDataset(sun.dataset, new Date(sun.date))
 
+  
   // Dynamically updated:
   $: sun = $system.chart.sun;
-  $: $system.chart.selected = selected;
+  $: $system.chart.chartType = chartType
+  $: $system.chart.selected = selected_ridges;
   $: locations = $system.stored.ridges;
-
-  sun.dataset = chartF.createDataset('Sun', sun.color);
-  chartF.updateSunDataset(sun.dataset, new Date(sun.date))
 
   // Functions:
   function sunSwitch() {
     if (sun.show) {
-      chartF.hideSunDataset()
+      chartF.removeDataset(sun.dataset)
+      sun.show = false
     } else {
-      chartF.showSunDataset()
+      chartF.addDataset(sun.dataset)
+      sun.show = true
     }
   }
 
-  function addTown(location: Ridge) {
+  function addLocation(location: Ridge) {
     noneSelect = 'none';
-    selected = [...selected, location]
+    selected_ridges = [...selected_ridges, location]
 
-    let dataset = location.datasets.find(x => x.type == $system.chart.chartType)
+    let dataset = location.datasets.find(x => x.type == chartType)
+
+    if (dataset.updated == false) {
+      chartF.updateDataset(dataset, {
+        points: location.points
+      })
+    }
+
     chartF.addDataset(dataset.dataset)
   }
 
-  function removeTown(index) {
-    let removed_location = selected.splice(index, 1)[0]
-    selected = selected;
+  function removeLocation(index: number) {
+    let removed_location = selected_ridges.splice(index, 1)[0]
+    selected_ridges = selected_ridges;
 
-    let dataset = removed_location.datasets.find(x => x.type == $system.chart.chartType)
+    let dataset = removed_location.datasets.find(x => x.type == chartType)
     chartF.removeDataset(dataset.dataset)
   }
 
@@ -68,18 +75,12 @@
   // }
 
   function townSelected(location: Ridge) {
-    for (let o of selected) {
+    for (let o of selected_ridges) {
       if (location.label == o.label) {
         return true
       }
     }
     return false
-  }
-
-  function test() {
-    let date = new Date(2022, 1, 1)
-    let sunPos = SunCalc.getPosition(date, 62, -7);
-    console.log(date.getFullYear())
   }
 
 </script>
@@ -88,7 +89,7 @@
 
   <header> Chart Type </header>
 
-  <select bind:value={$system.chart.chartType} on:change={chartF.changeChartType}>
+  <select bind:value={chartType} on:change={chartF.changeChartType}>
     {#each chartTypes as chartType}
     <option value={chartType}> {chartType} </option>
     {/each}
@@ -108,9 +109,9 @@
     bind:value={sun.color}
     on:change={() => chartF.changeChartColor(sun.dataset, sun.color)}/>
 
-    {#each selected as item, index}
+    {#each selected_ridges as item, index}
 
-    <button on:click={() => {removeTown(index)}}> Remove </button>
+    <button on:click={() => {removeLocation(index)}}> Remove </button>
 
     <div class="name"> {item.label} </div>
 
@@ -126,7 +127,9 @@
     <input class="colorpicker" type="color"
     bind:value={item.color}
     on:change={() => {
-      chartF.changeChartColor(item.dataset, item.color)
+      item.datasets.forEach(dataset => {
+        chartF.changeChartColor(dataset.dataset, item.color)
+      })
       updateColorOfLayer(item.polyline.onMap, item.color)
     }}/>
 
@@ -135,9 +138,10 @@
     <button class="placeholder"> Remove </button>
   
     <!-- {#key selected} Hesin blokkurin virkar áðrenn ein bygd verður vald... -->
-    <select disabled={selected.length == locations.length} 
+
+    <select disabled={selected_ridges.length == locations.length} 
     bind:value={noneSelect}
-    on:change={() => {addTown(noneSelect)}}>
+    on:change={() => {addLocation(noneSelect)}}>
       {#each locations as location} {#if !townSelected(location)}
       <option value={location}> {location.label} </option>
       {/if} {/each}
@@ -154,9 +158,6 @@
   on:input={() => chartF.updateSunDataset(sun.dataset, sun.date)}
   format={'yyyy-MM-dd'}/> -->
 
-  <button on:click={test}>
-    Heey
-  </button>
 
 </div>
 

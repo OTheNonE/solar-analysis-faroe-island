@@ -5,7 +5,8 @@ import { convertF } from "./ConvertUnit";
 import { chartF } from "./Chart";
 
 // Imports from Stores.svelte:
-import type { Point, Ridge, Crd } from "../Stores";
+import type { Point, Ridge, Crd, Dataset } from "../Stores";
+import { chartTypes } from "../Stores";
 
 var markerIcon = L.icon({
   iconUrl: 'marker.svg',
@@ -46,15 +47,20 @@ export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: nu
   let color = "#00ff00";
   let crds = convertF.PosToLatLng(ridgePoints)
 
+  let datasets: Dataset[] = []
+  chartTypes.forEach(chartType => {
+    datasets.push({
+      type: chartType,
+      updated: false,
+      dataset: chartF.createDataset(label, color)
+    })
+  })
+
   let ridge: Ridge = {
     color,
     label,
     points: ridgePoints,
-    datasets: [{
-      type: "Hillshade",
-      empty: true,
-      dataset: chartF.createDataset(label, color)
-    }],
+    datasets: datasets,
     marker: {
       onMap: createMarker(crd),
       crd,
@@ -68,10 +74,8 @@ export function createRidge(label: string, ridgePoints: Point[], crd: Crd, h: nu
     }
   }
 
-  chartF.updateDataset(ridge.datasets[0], {
+  chartF.updateDataset(ridge.datasets.find(dataset => dataset.type == "Hillshade"), {
     points: ridge.points,
-    label: ridge.label,
-    color: ridge.color,
   })
 
   return ridge

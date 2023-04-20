@@ -7,7 +7,7 @@ import SunCalc from 'suncalc';
 
 // Imports from Stores.svelte:
 import { system, type Ridge } from 'src/lib/Stores';
-import type { Pos, Crd, Dir, Point, Dataset } from 'src/lib/Stores'
+import type { Pos, Crd, Dir, Point, Dataset, ChartTypes } from 'src/lib/Stores'
 
 // Imports from function typescript files:
 import { angle360, getIntersection, isBetween, UnitTime } from './Functions';
@@ -144,6 +144,7 @@ function changeChartType() {
       chart.options = optionsHillshade;
     } else if (o.chart.chartType == "Sunrise") {
       chart.options = optionsSunrise;
+      
       hideSunDataset()
     } else if (o.chart.chartType == "Sunset") {
       chart.options = optionsSunrise;
@@ -151,7 +152,17 @@ function changeChartType() {
     }
 
     o.chart.selected.forEach(ridge => {
-      updateDataset(ridge)
+      let dataset = ridge.datasets.find(x => x.type == o.chart.chartType);
+      if (dataset == undefined) return
+
+      if (dataset.updated == false) {
+        updateDataset(dataset, { points: ridge.points })
+      }
+
+      let currentDatasets = o.chart.chart.data.datasets;
+      let index = currentDatasets.findIndex(x => x.label == ridge.label);
+      currentDatasets[index] = dataset.dataset
+
     })
 
     chart.update()
@@ -177,6 +188,7 @@ function updateDataset(dataset: Dataset, opt: {points?: Point[], label?: string,
     }
 
     dataset.dataset.data = data;
+    dataset.updated = true;
   }
   
   if (opt.label) {
@@ -356,15 +368,33 @@ function removeDataset(dataset: ChartDataset) {
 
     let index = currentDatasets.findIndex(x => x.label == dataset.label);
 
-    currentDatasets.splice(index, 1)
+    if (index != -1) {
+      currentDatasets.splice(index, 1)
+    }
 
     o.chart.chart.update();
+
+    return o
 
   })
 }
 
 function addDataset(dataset: ChartDataset) {
+  system.update(o => {
+    if (o.chart.chart == undefined) {return o}
 
+    let currentDatasets = o.chart.chart.data.datasets
+
+    let index = currentDatasets.findIndex(x => x.label == dataset.label);
+
+    if (index == -1) {
+      currentDatasets.push(dataset)
+    }
+
+    o.chart.chart.update();
+
+    return o
+  })
 }
 
 function showDatasets(newDatasets: ChartDataset[]) {
@@ -413,7 +443,8 @@ function showDatasets(newDatasets: ChartDataset[]) {
 }
 
 function createDataset(label: string, color: string) {
-  let dataset: ChartDataset = {
+  
+  let dataset = {
     label, 
     data: [],
     showLine: true,
@@ -445,31 +476,6 @@ function hideSunDataset() {
 
 }
 
-function showSunDataset() {
-  system.update(o => {
-    if (o.chart.chart == undefined) {return o}
-
-    let chart = o.chart.chart;
-    let dataset = o.chart.sun.dataset;
-
-    let sunIsShown = false;
-    chart.data.datasets.forEach((value, index) => {
-      if (value == dataset) {
-        sunIsShown = true;
-      }
-    })
-
-    if (!sunIsShown) {
-      chart.data.datasets.push(dataset)
-    }
-
-    chart.update()
-    o.chart.sun.show = true;
-    return o
-
-  })
-}
-
 function changeChartColor(dataset: ChartDataset, color: string) {
   system.update(o => {
     if (o.chart.chart == undefined) {return o}
@@ -488,7 +494,6 @@ function changeChartColor(dataset: ChartDataset, color: string) {
 
 // The object containing the functions:
 export let chartF = {
-  showSunDataset,
   hideSunDataset,
   updateSunDataset,
   createDataset,

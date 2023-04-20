@@ -3,6 +3,7 @@ import type { GeoTIFFImage } from 'geotiff';
 import { writable } from 'svelte/store';
 
 export type ChartTypes = 'Hillshade' | 'Sunrise' | 'Sunset';
+export const chartTypes: ChartTypes[] = ['Hillshade', 'Sunrise', 'Sunset'];
 
 export interface Point extends Dir, Pos { h: number, d: number, r: number }
 
@@ -62,7 +63,7 @@ interface Polyline {
 
 export interface Dataset {
   type: ChartTypes,
-  empty: boolean,
+  updated: boolean,
   dataset: ChartDataset
 }
 
