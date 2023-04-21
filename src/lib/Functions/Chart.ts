@@ -53,7 +53,7 @@ export let optionsHillshade: ChartOptions = {
     },
     y: {
       type: 'linear',
-      // min: 0,
+      min: -1,
       // max: 45,
     }
   },
@@ -142,13 +142,17 @@ function changeChartType() {
 
     if (o.chart.chartType == "Hillshade") {
       chart.options = optionsHillshade;
+
     } else if (o.chart.chartType == "Sunrise") {
       chart.options = optionsSunrise;
-      
-      hideSunDataset()
+      removeDataset("Sun")
+      get(system).chart.sun.show = false
+
     } else if (o.chart.chartType == "Sunset") {
       chart.options = optionsSunrise;
-      hideSunDataset()
+      removeDataset("Sun")
+      get(system).chart.sun.show = false
+      
     }
 
     o.chart.selected.forEach(ridge => {
@@ -360,13 +364,15 @@ function updateSunDataset(dataset: ChartDataset, date: Date) {
 
 }
 
-function removeDataset(dataset: ChartDataset) {
+function removeDataset(dataset: ChartDataset | string) {
   system.update(o => {
     if (o.chart.chart == undefined) {return o}
 
     let currentDatasets = o.chart.chart.data.datasets
 
-    let index = currentDatasets.findIndex(x => x.label == dataset.label);
+    let label = typeof dataset === "string" ? dataset : dataset.label;
+
+    let index = currentDatasets.findIndex(x => x.label == label);
 
     if (index != -1) {
       currentDatasets.splice(index, 1)

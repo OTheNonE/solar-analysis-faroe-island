@@ -27,10 +27,10 @@ export async function getRidgePoints(pos_m: Pos) {
 
   // let start = Date.now()
 
-  const DSM_Base = new URL(import.meta.url)
-  const DSM_25M = new URL('FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif', DSM_Base.origin);
-  const DSM_5M = new URL('FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif', DSM_Base.origin);
-
+  const DSM_Base = new URL(import.meta.env.BASE_URL, import.meta.url)
+  const DSM_25M = new URL('FO_DSM_2017_FOTM_25M_DEFLATE_UInt16.tif', DSM_Base);
+  const DSM_5M = new URL('FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif', DSM_Base);
+  
   // Load the 25M resolution map.
   let image_25M = await fetch(DSM_25M)
     .then(response  => response.arrayBuffer())

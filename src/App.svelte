@@ -85,7 +85,7 @@
 
   .chart {
     display: flex;
-    /* overflow: hidden; */
+    flex-direction: column;
     min-width: 0;
     min-height: 0;
     grid-area: bottom;
