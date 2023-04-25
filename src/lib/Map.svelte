@@ -108,7 +108,6 @@
 
   })
 
-
 </script>
 
 <div id="leafletmap" on:resize={resizeMap}/>

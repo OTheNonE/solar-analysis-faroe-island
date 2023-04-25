@@ -92,11 +92,6 @@ export function waitForElm(selector) {
   });
 }
 
-export interface StandardUnit {
-  name: string,
-  value: number,
-}
-
 export enum UnitTime {
   MILLIS = 1 * 365 * 24 * 60 * 60 * 1000,
   SECONDS = 1 * 365 * 24 * 60 * 60,

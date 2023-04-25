@@ -32,13 +32,7 @@ export async function getRidgePoints(pos_m: Pos) {
   const DSM_5M = new URL('FO_DSM_2017_FOTM_5M_DEFLATE_UInt16.tif', DSM_Base);
   
   // Load the 25M resolution map.
-  let image_25M = await fetch(DSM_25M)
-    .then(response  => response.arrayBuffer())
-    .then(tiff      => fromArrayBuffer(tiff))
-    .then(result    => result.getImage())
-    
-    
-  // getGeoTIFFImage(DSM_25M);
+  let image_25M = await getGeoTIFFImage(DSM_25M);
   let bbox_25M = getBoundingBox(image_25M);
   
   let px_m = convertF.PosToPixel(pos_m, bbox_25M)
@@ -259,7 +253,6 @@ function createInitialRidge(h_m: number, pos_m: Pos, dataset_length: number) {
   const h_horizon = -r_earth * h_m / (r_earth + h_m);
   const r_horizon = (h_horizon - h_m) / d_horizon;
   const alt_horizon = Math.atan2(h_horizon - h_m, d_horizon)
-  // const v_horizon = Math.asin(r_earth / (r_earth + h_m))
 
   let ridgePoints: Point[] = [];
 
@@ -281,7 +274,6 @@ function createInitialRidge(h_m: number, pos_m: Pos, dataset_length: number) {
 }
 
 async function getGeoTIFFImage(url: string | URL, options?: RequestInit) {
-  
   return fetch(url)
     .then(response  => response.arrayBuffer())
     .then(tiff      => fromArrayBuffer(tiff))
