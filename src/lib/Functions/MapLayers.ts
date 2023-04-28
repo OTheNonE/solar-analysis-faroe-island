@@ -45,6 +45,18 @@ loadingIconHTML.animate([
   iterations: Infinity
 })
 
+// let loadingIconHTML = new LoadingIcon({
+//   target: document.body
+// })
+
+// let div = document.createElement('div');
+
+// let component = new LoadingIcon({
+//   target: div,
+// })
+
+// let loadingIconHTML = component?.$$.fragment.
+
 // Create the Leaflet loading icon:
 let loadingIcon = L.divIcon({
   iconSize: [0, 0],
